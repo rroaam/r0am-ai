@@ -1,0 +1,2750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pageOS -- Public Identity | r0am.ai</title>
+<meta name="description" content="Your living public profile. AI-designed link pages that auto-update from your humanOS cards. Not a link tree -- a living portrait.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Host+Grotesk:wght@400;600;700;800;900&family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* =============================================
+   RESET & BASE
+   ============================================= */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0A0A0B;
+  --s1: #111113;
+  --s2: #16161A;
+  --border: #1E1E24;
+  --amber: #F59E0B;
+  --amber-dim: rgba(245, 158, 11, 0.12);
+  --amber-glow: rgba(245, 158, 11, 0.25);
+  --text: #E8E4DC;
+  --muted: #72727A;
+  --dim: #2C2C34;
+  --serif: 'Instrument Serif', serif;
+  --sans: 'Host Grotesk', system-ui, sans-serif;
+  --mono: 'Pixelify Sans', cursive;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+}
+
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* =============================================
+   ANIMATIONS
+   ============================================= */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(32px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse-amber {
+  0%, 100% { box-shadow: 0 0 0 0 var(--amber-glow); }
+  50% { box-shadow: 0 0 24px 4px var(--amber-glow); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes grid-drift {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(40px, 40px); }
+}
+
+@keyframes card-breathe {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(245,158,11,0.15), 0 8px 32px rgba(0,0,0,0.4); }
+  50% { box-shadow: 0 0 0 1px rgba(245,158,11,0.3), 0 12px 48px rgba(245,158,11,0.08); }
+}
+
+@keyframes status-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+.reveal-delay-5 { transition-delay: 0.5s; }
+
+/* =============================================
+   NAVIGATION
+   ============================================= */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 16px 0;
+  transition: background 0.3s, border-color 0.3s, backdrop-filter 0.3s;
+  border-bottom: 1px solid transparent;
+}
+
+.nav.scrolled {
+  background: rgba(10, 10, 11, 0.85);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border-bottom-color: var(--border);
+}
+
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-symbol {
+  font-size: 20px;
+  color: var(--amber);
+  line-height: 1;
+}
+
+.nav-logo {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.nav-parent {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  transition: color 0.2s;
+}
+
+.nav-parent:hover {
+  color: var(--amber);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.nav-link {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.nav-link:hover {
+  color: var(--text);
+}
+
+.nav-cta {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--amber);
+  padding: 8px 20px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-cta:hover {
+  background: #D97706;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+}
+
+/* =============================================
+   HERO
+   ============================================= */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  padding: 120px 0 80px;
+}
+
+/* Grid background */
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(245,158,11,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245,158,11,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: grid-drift 20s linear infinite;
+}
+
+.hero-grid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 50% at 50% 50%, transparent 0%, var(--bg) 70%);
+}
+
+/* Amber radial glow */
+.hero-glow {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 600px;
+  background: radial-gradient(ellipse, rgba(245,158,11,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.hero-content {
+  animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+
+.hero-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-label::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--amber);
+}
+
+.hero-title {
+  font-family: var(--serif);
+  font-size: clamp(56px, 8vw, 96px);
+  font-weight: 300;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+.hero-title span {
+  color: var(--amber);
+}
+
+.hero-tagline {
+  font-family: var(--serif);
+  font-size: clamp(20px, 2.5vw, 28px);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--muted);
+  margin-bottom: 32px;
+  line-height: 1.4;
+}
+
+.hero-desc {
+  font-size: 16px;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 440px;
+  margin-bottom: 40px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--amber);
+  padding: 14px 32px;
+  border: 2px solid var(--amber);
+  cursor: pointer;
+  transition: all 0.25s;
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  background: transparent;
+  color: var(--amber);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--amber-glow);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 14px 32px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.25s;
+  background: transparent;
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  color: var(--text);
+  border-color: var(--muted);
+  transform: translateY(-2px);
+}
+
+/* =============================================
+   HERO PROFILE MOCKUP
+   ============================================= */
+.hero-mockup {
+  animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+  perspective: 1200px;
+}
+
+.profile-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  animation: card-breathe 4s ease-in-out infinite;
+  transform: rotateY(-3deg) rotateX(2deg);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-card:hover {
+  transform: rotateY(0deg) rotateX(0deg);
+}
+
+.profile-header {
+  position: relative;
+  padding: 32px 28px 24px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(245,158,11,0.06) 0%, transparent 60%);
+}
+
+.profile-status {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--amber);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.profile-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+  animation: status-blink 2s ease-in-out infinite;
+}
+
+.profile-url {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  margin-bottom: 16px;
+  letter-spacing: 0.05em;
+}
+
+.profile-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--amber) 0%, #D97706 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--bg);
+}
+
+.profile-name {
+  font-family: var(--sans);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.profile-handle {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.profile-bio {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  max-width: 320px;
+}
+
+.profile-section {
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-section:last-child {
+  border-bottom: none;
+}
+
+.profile-section-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 12px;
+}
+
+/* Projects */
+.profile-projects {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-project {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.profile-project:hover {
+  border-color: rgba(245,158,11,0.3);
+}
+
+.profile-project-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.profile-project-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+
+.profile-project-tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  background: var(--s2);
+  border-radius: 4px;
+}
+
+/* Stack */
+.profile-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.profile-stack-item {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  padding: 4px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.profile-stack-item:hover {
+  color: var(--amber);
+  border-color: rgba(245,158,11,0.3);
+}
+
+/* Links */
+.profile-links {
+  display: flex;
+  gap: 8px;
+}
+
+.profile-link-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.profile-link-icon:hover {
+  border-color: var(--amber);
+  background: var(--amber-dim);
+}
+
+.profile-link-icon svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--muted);
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.profile-link-icon:hover svg {
+  stroke: var(--amber);
+}
+
+/* Aesthetic bar */
+.profile-aesthetic {
+  display: flex;
+  gap: 4px;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.profile-aesthetic-bar {
+  flex: 1;
+  border-radius: 2px;
+}
+
+@media (max-width: 900px) {
+  .hero-inner {
+    grid-template-columns: 1fr;
+    gap: 48px;
+    text-align: center;
+  }
+  .hero-content { order: 1; }
+  .hero-mockup { order: 2; }
+  .hero-desc { margin-left: auto; margin-right: auto; }
+  .hero-actions { justify-content: center; }
+  .hero-label { justify-content: center; }
+  .profile-card { transform: none; max-width: 420px; margin: 0 auto; }
+}
+
+/* =============================================
+   SECTION DIVIDER
+   ============================================= */
+.section-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--border) 20%, var(--amber) 50%, var(--border) 80%, transparent 100%);
+  opacity: 0.5;
+}
+
+/* =============================================
+   SECTION: STATIC VS LIVING
+   ============================================= */
+.section {
+  padding: 120px 0;
+  position: relative;
+}
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-label::before {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: var(--amber);
+}
+
+.section-title {
+  font-family: var(--serif);
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 20px;
+}
+
+.section-subtitle {
+  font-size: 17px;
+  color: var(--muted);
+  max-width: 520px;
+  line-height: 1.6;
+  margin-bottom: 64px;
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 48px 1fr;
+  gap: 0;
+  align-items: stretch;
+}
+
+.compare-card {
+  padding: 48px 40px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.compare-card--dead {
+  background: var(--s1);
+  opacity: 0.7;
+}
+
+.compare-card--dead::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 20px,
+    rgba(114,114,122,0.03) 20px,
+    rgba(114,114,122,0.03) 21px
+  );
+  pointer-events: none;
+}
+
+.compare-card--alive {
+  background: linear-gradient(135deg, rgba(245,158,11,0.04) 0%, var(--s1) 40%);
+  border-color: rgba(245,158,11,0.2);
+}
+
+.compare-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.compare-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.compare-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-family: var(--sans);
+  font-weight: 800;
+}
+
+.compare-card--dead .compare-icon {
+  background: var(--s2);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.compare-card--alive .compare-icon {
+  background: var(--amber);
+  color: var(--bg);
+}
+
+.compare-name {
+  font-family: var(--sans);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.compare-card--dead .compare-name {
+  color: var(--muted);
+}
+
+.compare-era {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+}
+
+.compare-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.compare-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.compare-list li .icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.compare-card--dead .compare-list li .icon {
+  color: var(--dim);
+}
+
+.compare-card--dead .compare-list li {
+  color: var(--muted);
+}
+
+.compare-card--alive .compare-list li .icon {
+  color: var(--amber);
+}
+
+.compare-card--alive .compare-list li {
+  color: var(--text);
+}
+
+.compare-stat {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.compare-stat-number {
+  font-family: var(--sans);
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.compare-card--dead .compare-stat-number {
+  color: var(--muted);
+}
+
+.compare-card--alive .compare-stat-number {
+  color: var(--amber);
+}
+
+.compare-stat-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .compare-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .compare-vs {
+    padding: 8px 0;
+  }
+  .compare-card {
+    padding: 32px 24px;
+  }
+}
+
+/* =============================================
+   SECTION: WHAT YOUR PAGE SHOWS
+   ============================================= */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.feature-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px 28px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--amber);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.feature-card:hover::before {
+  transform: scaleX(1);
+}
+
+.feature-card:hover {
+  border-color: rgba(245,158,11,0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+}
+
+.feature-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--amber-dim);
+  border: 1px solid rgba(245,158,11,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  color: var(--amber);
+  font-size: 18px;
+}
+
+.feature-name {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.feature-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.feature-preview {
+  margin-top: 20px;
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.feature-preview-line {
+  height: 4px;
+  border-radius: 2px;
+  margin-bottom: 6px;
+  background: var(--dim);
+}
+
+.feature-preview-line:last-child { margin-bottom: 0; }
+.feature-preview-line.short { width: 60%; }
+.feature-preview-line.medium { width: 80%; }
+.feature-preview-line.amber { background: rgba(245,158,11,0.25); }
+
+@media (max-width: 900px) {
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =============================================
+   SECTION: AUTO-UPDATES
+   ============================================= */
+.flow-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 40px 0;
+}
+
+.flow-node {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  flex: 0 0 280px;
+  position: relative;
+}
+
+.flow-node--source {
+  border-color: rgba(124,58,237,0.3);
+}
+
+.flow-node--target {
+  border-color: rgba(245,158,11,0.3);
+}
+
+.flow-node-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 22px;
+}
+
+.flow-node--source .flow-node-icon {
+  background: rgba(124,58,237,0.12);
+  color: #7C3AED;
+}
+
+.flow-node--target .flow-node-icon {
+  background: var(--amber-dim);
+  color: var(--amber);
+}
+
+.flow-node-name {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.flow-node-desc {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+
+.flow-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.flow-arrow-line {
+  width: 80px;
+  height: 2px;
+  background: linear-gradient(90deg, #7C3AED, var(--amber));
+  position: relative;
+}
+
+.flow-arrow-line::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid var(--amber);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+.flow-arrow-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* Shimmer across the flow arrow */
+.flow-arrow-line::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 0;
+  width: 24px;
+  height: 6px;
+  background: linear-gradient(90deg, transparent, rgba(245,158,11,0.6), transparent);
+  animation: shimmer 2.5s ease-in-out infinite;
+  background-size: 200% auto;
+  border-radius: 3px;
+}
+
+.flow-demo {
+  margin-top: 48px;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.flow-demo-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flow-demo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.flow-demo-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: 8px;
+  letter-spacing: 0.05em;
+}
+
+.flow-demo-body {
+  display: grid;
+  grid-template-columns: 1fr 48px 1fr;
+  min-height: 200px;
+}
+
+.flow-demo-panel {
+  padding: 24px;
+}
+
+.flow-demo-panel-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.flow-demo-panel--source .flow-demo-panel-label {
+  color: #7C3AED;
+}
+
+.flow-demo-panel--target .flow-demo-panel-label {
+  color: var(--amber);
+}
+
+.flow-demo-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.flow-demo-separator svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--dim);
+  fill: none;
+  stroke-width: 2;
+}
+
+.flow-demo-card-field {
+  padding: 10px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  transition: all 0.4s;
+}
+
+.flow-demo-card-field-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.flow-demo-card-field-value {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.flow-demo-card-field--highlight {
+  border-color: rgba(245,158,11,0.4);
+  background: rgba(245,158,11,0.04);
+}
+
+.flow-demo-card-field--highlight .flow-demo-card-field-value {
+  color: var(--amber);
+}
+
+@media (max-width: 768px) {
+  .flow-container {
+    flex-direction: column;
+  }
+  .flow-node { flex: none; width: 100%; max-width: 320px; }
+  .flow-arrow { transform: rotate(90deg); }
+  .flow-demo-body {
+    grid-template-columns: 1fr;
+  }
+  .flow-demo-separator {
+    border-left: none;
+    border-right: none;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 12px;
+    transform: rotate(90deg);
+  }
+}
+
+/* =============================================
+   SECTION: AI-DESIGNED
+   ============================================= */
+.styles-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.style-card {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: all 0.3s;
+  cursor: default;
+}
+
+.style-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+}
+
+.style-card-preview {
+  padding: 24px 20px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.style-card--minimal .style-card-preview {
+  background: #FAFAF9;
+}
+
+.style-card--minimal .sc-name {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 800;
+  color: #1A1A1A;
+}
+
+.style-card--minimal .sc-handle {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #999;
+}
+
+.style-card--minimal .sc-tags {
+  display: flex; gap: 4px; margin-top: 12px;
+}
+
+.style-card--minimal .sc-tag {
+  font-size: 10px;
+  padding: 2px 8px;
+  background: #F0F0F0;
+  border-radius: 3px;
+  color: #666;
+  font-family: var(--mono);
+}
+
+.style-card--dark .style-card-preview {
+  background: #0D0D0D;
+  border-bottom: 2px solid #00FF88;
+}
+
+.style-card--dark .sc-name {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: #00FF88;
+  letter-spacing: 0.05em;
+}
+
+.style-card--dark .sc-handle {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #444;
+}
+
+.style-card--dark .sc-tags {
+  display: flex; gap: 4px; margin-top: 12px;
+}
+
+.style-card--dark .sc-tag {
+  font-size: 9px;
+  padding: 2px 6px;
+  border: 1px solid #222;
+  color: #555;
+  font-family: var(--mono);
+}
+
+.style-card--warm .style-card-preview {
+  background: linear-gradient(135deg, #2D1810, #1A0F08);
+}
+
+.style-card--warm .sc-name {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 300;
+  color: #E8C9A0;
+}
+
+.style-card--warm .sc-handle {
+  font-family: var(--serif);
+  font-size: 12px;
+  color: #8B7355;
+  font-style: italic;
+}
+
+.style-card--warm .sc-tags {
+  display: flex; gap: 4px; margin-top: 12px;
+}
+
+.style-card--warm .sc-tag {
+  font-size: 10px;
+  padding: 2px 8px;
+  background: rgba(232,201,160,0.1);
+  border-radius: 12px;
+  color: #8B7355;
+  font-family: var(--serif);
+}
+
+.style-card--bold .style-card-preview {
+  background: #FF3366;
+}
+
+.style-card--bold .sc-name {
+  font-family: var(--sans);
+  font-size: 22px;
+  font-weight: 900;
+  color: #FFF;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+
+.style-card--bold .sc-handle {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  font-weight: 700;
+}
+
+.style-card--bold .sc-tags {
+  display: flex; gap: 4px; margin-top: 12px;
+}
+
+.style-card--bold .sc-tag {
+  font-size: 10px;
+  padding: 3px 10px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 0;
+  color: #FFF;
+  font-family: var(--sans);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.style-card-footer {
+  padding: 16px 20px;
+  background: var(--s1);
+  border-top: 1px solid var(--border);
+}
+
+.style-card-footer-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.style-card-footer-desc {
+  font-size: 12px;
+  color: var(--dim);
+}
+
+@media (max-width: 900px) {
+  .styles-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .styles-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =============================================
+   SECTION: USE CASES
+   ============================================= */
+.usecases-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.usecase {
+  background: var(--s1);
+  padding: 40px 32px;
+  transition: background 0.3s;
+}
+
+.usecase:hover {
+  background: var(--s2);
+}
+
+.usecase-icon {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--amber);
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.usecase-role {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.usecase-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.usecase-example {
+  margin-top: 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: 0.03em;
+}
+
+@media (max-width: 900px) {
+  .usecases-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .usecases-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =============================================
+   SECTION: PRICING
+   ============================================= */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.pricing-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 36px;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.pricing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+}
+
+.pricing-card--pro {
+  border-color: rgba(245,158,11,0.3);
+  background: linear-gradient(135deg, rgba(245,158,11,0.04) 0%, var(--s1) 50%);
+}
+
+.pricing-badge {
+  position: absolute;
+  top: -1px;
+  right: 32px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--amber);
+  padding: 4px 12px;
+  border-radius: 0 0 6px 6px;
+}
+
+.pricing-tier {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.pricing-price {
+  font-family: var(--sans);
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.pricing-price-amount {
+  font-size: 48px;
+  color: var(--text);
+}
+
+.pricing-card--pro .pricing-price-amount {
+  color: var(--amber);
+}
+
+.pricing-price-period {
+  font-size: 16px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.pricing-desc {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+.pricing-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.pricing-features li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.pricing-features li .check {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pricing-card:not(.pricing-card--pro) .pricing-features li .check {
+  background: var(--s2);
+  color: var(--muted);
+}
+
+.pricing-card--pro .pricing-features li .check {
+  background: var(--amber-dim);
+  color: var(--amber);
+}
+
+.pricing-btn {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.pricing-btn--free {
+  background: var(--s2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.pricing-btn--free:hover {
+  background: var(--dim);
+  border-color: var(--muted);
+}
+
+.pricing-btn--pro {
+  background: var(--amber);
+  color: var(--bg);
+}
+
+.pricing-btn--pro:hover {
+  background: #D97706;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px var(--amber-glow);
+}
+
+@media (max-width: 600px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =============================================
+   SECTION: CTA
+   ============================================= */
+.cta-section {
+  padding: 120px 0 160px;
+  text-align: center;
+  position: relative;
+}
+
+.cta-section::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 400px;
+  background: radial-gradient(ellipse, rgba(245,158,11,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.cta-symbol {
+  font-size: 48px;
+  color: var(--amber);
+  margin-bottom: 24px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.cta-title {
+  font-family: var(--serif);
+  font-size: clamp(40px, 6vw, 64px);
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+
+.cta-subtitle {
+  font-size: 17px;
+  color: var(--muted);
+  margin-bottom: 48px;
+}
+
+.claim-input-wrapper {
+  max-width: 480px;
+  margin: 0 auto 16px;
+  position: relative;
+}
+
+.claim-input-container {
+  display: flex;
+  align-items: center;
+  background: var(--s1);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+.claim-input-container:focus-within {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 4px var(--amber-dim);
+}
+
+.claim-input {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 15px;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 16px 20px;
+  letter-spacing: 0.02em;
+}
+
+.claim-input::placeholder {
+  color: var(--dim);
+}
+
+.claim-suffix {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--muted);
+  padding-right: 8px;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.claim-btn {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--amber);
+  border: none;
+  padding: 16px 24px;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.claim-btn:hover {
+  background: #D97706;
+}
+
+.claim-feedback {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--amber);
+  margin-top: 12px;
+  min-height: 20px;
+  transition: opacity 0.3s;
+}
+
+.claim-feedback.hidden {
+  opacity: 0;
+}
+
+.cta-back {
+  margin-top: 48px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+}
+
+.cta-back a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s;
+}
+
+.cta-back a:hover {
+  color: var(--amber);
+}
+
+/* =============================================
+   FOOTER
+   ============================================= */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 40px 0;
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-symbol {
+  color: var(--amber);
+  font-size: 16px;
+}
+
+.footer-name {
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.footer-links {
+  display: flex;
+  gap: 24px;
+}
+
+.footer-link {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: 0.05em;
+  transition: color 0.2s;
+}
+
+.footer-link:hover {
+  color: var(--muted);
+}
+
+.footer-copy {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: 0.03em;
+}
+
+@media (max-width: 600px) {
+  .footer-inner {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+}
+
+/* =============================================
+   QUOTE / PULLQUOTE
+   ============================================= */
+.pullquote {
+  text-align: center;
+  padding: 80px 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.pullquote-text {
+  font-family: var(--serif);
+  font-size: clamp(24px, 3.5vw, 36px);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--text);
+  line-height: 1.4;
+  margin-bottom: 16px;
+}
+
+.pullquote-text .highlight {
+  color: var(--amber);
+  font-style: normal;
+}
+
+.pullquote-attr {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================= -->
+<!-- NAVIGATION                                    -->
+<!-- ============================================= -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <span class="nav-symbol">&#9672;</span>
+      <span class="nav-logo">pageOS</span>
+    </div>
+    <div class="nav-links">
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#how-it-works" class="nav-link">How It Works</a>
+      <a href="#pricing" class="nav-link">Pricing</a>
+      <a href="https://r0am.ai" class="nav-parent">r0am.ai &nearr;</a>
+      <a href="#claim" class="nav-cta">Claim Your Page</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============================================= -->
+<!-- HERO                                          -->
+<!-- ============================================= -->
+<section class="hero" id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-inner">
+    <div class="hero-content">
+      <div class="hero-label">Public Identity</div>
+      <h1 class="hero-title">page<span>OS</span></h1>
+      <p class="hero-tagline">Your living public profile.</p>
+      <p class="hero-desc">
+        AI-designed link pages that auto-update from your humanOS cards. Your stack, projects, aesthetic -- always current. Not a link tree. A living portrait.
+      </p>
+      <div class="hero-actions">
+        <a href="#claim" class="btn-primary">Claim Your Page &rarr;</a>
+        <a href="#features" class="btn-secondary">See How</a>
+      </div>
+    </div>
+
+    <div class="hero-mockup">
+      <div class="profile-card">
+        <div class="profile-header">
+          <div class="profile-status">
+            <span class="profile-status-dot"></span>
+            Live
+          </div>
+          <div class="profile-url">alex.r0am.ai</div>
+          <div class="profile-avatar">A</div>
+          <div class="profile-name">Alex Chen</div>
+          <div class="profile-handle">@alexbuilds</div>
+          <div class="profile-bio">Design engineer building tools for the next generation of creators. Currently shipping at r0am.</div>
+        </div>
+
+        <div class="profile-section">
+          <div class="profile-section-label">Current Projects</div>
+          <div class="profile-projects">
+            <div class="profile-project">
+              <div class="profile-project-dot" style="background: var(--amber);"></div>
+              <div class="profile-project-name">pageOS</div>
+              <div class="profile-project-tag">Shipping</div>
+            </div>
+            <div class="profile-project">
+              <div class="profile-project-dot" style="background: #7C3AED;"></div>
+              <div class="profile-project-name">humanOS</div>
+              <div class="profile-project-tag">Active</div>
+            </div>
+            <div class="profile-project">
+              <div class="profile-project-dot" style="background: #34C759;"></div>
+              <div class="profile-project-name">ToolCrate</div>
+              <div class="profile-project-tag">Live</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <div class="profile-section-label">Stack</div>
+          <div class="profile-stack">
+            <span class="profile-stack-item">Next.js</span>
+            <span class="profile-stack-item">TypeScript</span>
+            <span class="profile-stack-item">Tailwind</span>
+            <span class="profile-stack-item">Supabase</span>
+            <span class="profile-stack-item">Figma</span>
+            <span class="profile-stack-item">Vercel</span>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <div class="profile-section-label">Links</div>
+          <div class="profile-links">
+            <div class="profile-link-icon">
+              <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            </div>
+            <div class="profile-link-icon">
+              <svg viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>
+            </div>
+            <div class="profile-link-icon">
+              <svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+            </div>
+            <div class="profile-link-icon">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <div class="profile-section-label">Aesthetic</div>
+          <div class="profile-aesthetic">
+            <div class="profile-aesthetic-bar" style="background: #F59E0B; flex: 3;"></div>
+            <div class="profile-aesthetic-bar" style="background: #1A1A1A; flex: 2;"></div>
+            <div class="profile-aesthetic-bar" style="background: #7C3AED; flex: 1;"></div>
+            <div class="profile-aesthetic-bar" style="background: #E8E4DC; flex: 1;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================= -->
+<!-- PULLQUOTE                                     -->
+<!-- ============================================= -->
+<div class="section-divider"></div>
+<div class="pullquote reveal">
+  <p class="pullquote-text">
+    "Linktree is a <span class="highlight">parking lot</span>.<br>
+    pageOS is a <span class="highlight">living portrait</span>."
+  </p>
+  <p class="pullquote-attr">The pageOS Thesis</p>
+</div>
+<div class="section-divider"></div>
+
+<!-- ============================================= -->
+<!-- STATIC VS LIVING                              -->
+<!-- ============================================= -->
+<section class="section" id="compare">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">The Problem</div>
+      <h2 class="section-title">Static links are dead.</h2>
+      <p class="section-subtitle">70 million people use link-in-bio tools that haven't evolved since 2020. No intelligence, no identity, no life.</p>
+    </div>
+
+    <div class="compare-grid reveal reveal-delay-2">
+      <div class="compare-card compare-card--dead">
+        <div class="compare-header">
+          <div class="compare-icon">L</div>
+          <div>
+            <div class="compare-name">Linktree</div>
+            <div class="compare-era">Est. 2016 -- Unchanged</div>
+          </div>
+        </div>
+        <ul class="compare-list">
+          <li>
+            <span class="icon">&mdash;</span>
+            Static links, manually updated
+          </li>
+          <li>
+            <span class="icon">&mdash;</span>
+            Generic templates, no personality
+          </li>
+          <li>
+            <span class="icon">&mdash;</span>
+            Zero AI, zero intelligence
+          </li>
+          <li>
+            <span class="icon">&mdash;</span>
+            Just links -- no projects, no stack, no context
+          </li>
+          <li>
+            <span class="icon">&mdash;</span>
+            Your page looks like everyone else's
+          </li>
+        </ul>
+        <div class="compare-stat">
+          <div class="compare-stat-number">70M</div>
+          <div class="compare-stat-label">Users stuck in 2020</div>
+        </div>
+      </div>
+
+      <div class="compare-vs">vs</div>
+
+      <div class="compare-card compare-card--alive">
+        <div class="compare-header">
+          <div class="compare-icon">&#9672;</div>
+          <div>
+            <div class="compare-name">pageOS</div>
+            <div class="compare-era">Identity-first -- Always current</div>
+          </div>
+        </div>
+        <ul class="compare-list">
+          <li>
+            <span class="icon">&#10042;</span>
+            Auto-updates from your humanOS cards
+          </li>
+          <li>
+            <span class="icon">&#10042;</span>
+            AI designs layouts matching your aesthetic
+          </li>
+          <li>
+            <span class="icon">&#10042;</span>
+            Identity-aware -- knows your projects, stack, vibe
+          </li>
+          <li>
+            <span class="icon">&#10042;</span>
+            Full public identity, not just links
+          </li>
+          <li>
+            <span class="icon">&#10042;</span>
+            Every page is as unique as its owner
+          </li>
+        </ul>
+        <div class="compare-stat">
+          <div class="compare-stat-number">$9</div>
+          <div class="compare-stat-label">Per month -- unlock your identity</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ============================================= -->
+<!-- WHAT YOUR PAGE SHOWS                          -->
+<!-- ============================================= -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">Anatomy of a Page</div>
+      <h2 class="section-title">More than links.<br>Your full identity.</h2>
+      <p class="section-subtitle">Every pageOS profile is a living document -- six sections that paint the full picture of who you are and what you're building.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="feature-name">Identity & Bio</div>
+        <div class="feature-desc">Your name, handle, bio, and avatar -- pulled from your humanOS Identity card. Always accurate, always you.</div>
+        <div class="feature-preview">
+          <div class="feature-preview-line amber" style="width: 40%;"></div>
+          <div class="feature-preview-line" style="width: 100%;"></div>
+          <div class="feature-preview-line" style="width: 75%;"></div>
+        </div>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        </div>
+        <div class="feature-name">Current Projects</div>
+        <div class="feature-desc">What you're actively building. Status, links, descriptions -- auto-synced from your Current Work card.</div>
+        <div class="feature-preview">
+          <div class="feature-preview-line amber" style="width: 60%;"></div>
+          <div class="feature-preview-line" style="width: 90%;"></div>
+          <div class="feature-preview-line amber" style="width: 50%;"></div>
+          <div class="feature-preview-line" style="width: 85%;"></div>
+        </div>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div class="feature-name">Tech Stack</div>
+        <div class="feature-desc">Your tools, languages, and frameworks. Sourced from your Expertise card. Visually stunning, always current.</div>
+        <div class="feature-preview">
+          <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+            <div class="feature-preview-line" style="width: 48px; margin: 0;"></div>
+            <div class="feature-preview-line amber" style="width: 56px; margin: 0;"></div>
+            <div class="feature-preview-line" style="width: 40px; margin: 0;"></div>
+            <div class="feature-preview-line" style="width: 52px; margin: 0;"></div>
+            <div class="feature-preview-line amber" style="width: 44px; margin: 0;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </div>
+        <div class="feature-name">Links & Socials</div>
+        <div class="feature-desc">All your important links in one place. GitHub, Twitter, LinkedIn, portfolio, newsletter -- beautifully arranged.</div>
+        <div class="feature-preview">
+          <div style="display: flex; gap: 6px;">
+            <div style="width: 24px; height: 24px; border-radius: 6px; background: var(--dim);"></div>
+            <div style="width: 24px; height: 24px; border-radius: 6px; background: var(--dim);"></div>
+            <div style="width: 24px; height: 24px; border-radius: 6px; background: rgba(245,158,11,0.25);"></div>
+            <div style="width: 24px; height: 24px; border-radius: 6px; background: var(--dim);"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <div class="feature-name">Aesthetic & Vibe</div>
+        <div class="feature-desc">Your color palette, typography preferences, visual style -- your Aesthetic card shapes how your page looks and feels.</div>
+        <div class="feature-preview">
+          <div class="profile-aesthetic" style="height: 6px;">
+            <div class="profile-aesthetic-bar" style="background: #F59E0B; flex: 2;"></div>
+            <div class="profile-aesthetic-bar" style="background: #7C3AED; flex: 1;"></div>
+            <div class="profile-aesthetic-bar" style="background: #E8E4DC; flex: 1;"></div>
+            <div class="profile-aesthetic-bar" style="background: #1A1A1A; flex: 2;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </div>
+        <div class="feature-name">Narrative</div>
+        <div class="feature-desc">Your story, your way. Your Narrative card feeds the bio, the tone, the language. Authentic voice, not template copy.</div>
+        <div class="feature-preview">
+          <div class="feature-preview-line" style="width: 100%;"></div>
+          <div class="feature-preview-line amber" style="width: 90%;"></div>
+          <div class="feature-preview-line" style="width: 70%;"></div>
+          <div class="feature-preview-line" style="width: 95%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ============================================= -->
+<!-- AUTO-UPDATES                                  -->
+<!-- ============================================= -->
+<section class="section" id="how-it-works">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">Zero Maintenance</div>
+      <h2 class="section-title">Change your identity.<br>Your page follows.</h2>
+      <p class="section-subtitle">Edit a humanOS card. Your pageOS profile updates instantly. New project? Updated bio? Changed your stack? Done.</p>
+    </div>
+
+    <div class="flow-container reveal reveal-delay-1">
+      <div class="flow-node flow-node--source">
+        <div class="flow-node-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        </div>
+        <div class="flow-node-name">humanOS</div>
+        <div class="flow-node-desc">Edit your identity cards</div>
+      </div>
+
+      <div class="flow-arrow">
+        <div class="flow-arrow-label">Auto-sync</div>
+        <div class="flow-arrow-line"></div>
+      </div>
+
+      <div class="flow-node flow-node--target">
+        <div class="flow-node-icon">&#9672;</div>
+        <div class="flow-node-name">pageOS</div>
+        <div class="flow-node-desc">Page reflects changes instantly</div>
+      </div>
+    </div>
+
+    <div class="flow-demo reveal reveal-delay-2">
+      <div class="flow-demo-header">
+        <div class="flow-demo-dot" style="background: #FF5F57;"></div>
+        <div class="flow-demo-dot" style="background: #FEBC2E;"></div>
+        <div class="flow-demo-dot" style="background: #28C840;"></div>
+        <div class="flow-demo-title">Live Sync Preview</div>
+      </div>
+      <div class="flow-demo-body">
+        <div class="flow-demo-panel flow-demo-panel--source">
+          <div class="flow-demo-panel-label">humanOS Card</div>
+          <div class="flow-demo-card-field">
+            <div class="flow-demo-card-field-label">Name</div>
+            <div class="flow-demo-card-field-value">Alex Chen</div>
+          </div>
+          <div class="flow-demo-card-field flow-demo-card-field--highlight">
+            <div class="flow-demo-card-field-label">Role</div>
+            <div class="flow-demo-card-field-value" id="demo-role-source">Design Engineer &rarr; Creative Director</div>
+          </div>
+          <div class="flow-demo-card-field">
+            <div class="flow-demo-card-field-label">Status</div>
+            <div class="flow-demo-card-field-value">Building in public</div>
+          </div>
+        </div>
+
+        <div class="flow-demo-separator">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+
+        <div class="flow-demo-panel flow-demo-panel--target">
+          <div class="flow-demo-panel-label">pageOS Profile</div>
+          <div class="flow-demo-card-field">
+            <div class="flow-demo-card-field-label">Display Name</div>
+            <div class="flow-demo-card-field-value">Alex Chen</div>
+          </div>
+          <div class="flow-demo-card-field flow-demo-card-field--highlight">
+            <div class="flow-demo-card-field-label">Bio Line</div>
+            <div class="flow-demo-card-field-value" id="demo-role-target">Creative Director building tools for creators</div>
+          </div>
+          <div class="flow-demo-card-field">
+            <div class="flow-demo-card-field-label">Tagline</div>
+            <div class="flow-demo-card-field-value">Building in public</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ============================================= -->
+<!-- AI-DESIGNED                                   -->
+<!-- ============================================= -->
+<section class="section" id="ai-design">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">AI Layout Engine</div>
+      <h2 class="section-title">Your page reflects<br><em>your</em> aesthetic.</h2>
+      <p class="section-subtitle">No two pages look the same. The AI reads your Aesthetic card and generates a layout, palette, and typography that's uniquely yours.</p>
+    </div>
+
+    <div class="styles-grid reveal reveal-delay-2">
+      <div class="style-card style-card--minimal">
+        <div class="style-card-preview">
+          <div class="sc-name">Sarah Kim</div>
+          <div class="sc-handle">@sarahux</div>
+          <div class="sc-tags">
+            <span class="sc-tag">Design</span>
+            <span class="sc-tag">Figma</span>
+          </div>
+        </div>
+        <div class="style-card-footer">
+          <div class="style-card-footer-label">Minimal Clean</div>
+          <div class="style-card-footer-desc">Light, airy, Swiss-inspired</div>
+        </div>
+      </div>
+
+      <div class="style-card style-card--dark">
+        <div class="style-card-preview">
+          <div class="sc-name">dev_marcus</div>
+          <div class="sc-handle">@marcus.sh</div>
+          <div class="sc-tags">
+            <span class="sc-tag">Rust</span>
+            <span class="sc-tag">Systems</span>
+          </div>
+        </div>
+        <div class="style-card-footer">
+          <div class="style-card-footer-label">Terminal Dark</div>
+          <div class="style-card-footer-desc">Hacker, monospace, green-on-black</div>
+        </div>
+      </div>
+
+      <div class="style-card style-card--warm">
+        <div class="style-card-preview">
+          <div class="sc-name">Elena Morales</div>
+          <div class="sc-handle">writer & editor</div>
+          <div class="sc-tags">
+            <span class="sc-tag">Essays</span>
+            <span class="sc-tag">Poetry</span>
+          </div>
+        </div>
+        <div class="style-card-footer">
+          <div class="style-card-footer-label">Warm Editorial</div>
+          <div class="style-card-footer-desc">Serif, earthy, literary</div>
+        </div>
+      </div>
+
+      <div class="style-card style-card--bold">
+        <div class="style-card-preview">
+          <div class="sc-name">JAY NOVA</div>
+          <div class="sc-handle">@jaynova</div>
+          <div class="sc-tags">
+            <span class="sc-tag">Music</span>
+            <span class="sc-tag">Visual</span>
+          </div>
+        </div>
+        <div class="style-card-footer">
+          <div class="style-card-footer-label">Bold Pop</div>
+          <div class="style-card-footer-desc">Vivid, high-contrast, maximalist</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ============================================= -->
+<!-- USE CASES                                     -->
+<!-- ============================================= -->
+<section class="section" id="usecases">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">For Everyone Who Builds</div>
+      <h2 class="section-title">One product.<br>Every creator type.</h2>
+      <p class="section-subtitle">Whether you ship code, art, music, or businesses -- pageOS adapts to show the world who you are.</p>
+    </div>
+
+    <div class="usecases-grid reveal reveal-delay-2">
+      <div class="usecase">
+        <div class="usecase-icon">&lt;/&gt;</div>
+        <div class="usecase-role">Developers</div>
+        <div class="usecase-desc">Showcase your stack, GitHub repos, and side projects. Auto-pull your tech expertise from humanOS.</div>
+        <div class="usecase-example">alex.r0am.ai</div>
+      </div>
+      <div class="usecase">
+        <div class="usecase-icon">&#9670;</div>
+        <div class="usecase-role">Designers</div>
+        <div class="usecase-desc">Your portfolio, tools, and design philosophy -- all in a page that IS the portfolio piece.</div>
+        <div class="usecase-example">sarah.r0am.ai</div>
+      </div>
+      <div class="usecase">
+        <div class="usecase-icon">&#9651;</div>
+        <div class="usecase-role">Founders</div>
+        <div class="usecase-desc">Your ventures, vision, and social proof. An investor-ready presence that updates as you pivot.</div>
+        <div class="usecase-example">jordan.r0am.ai</div>
+      </div>
+      <div class="usecase">
+        <div class="usecase-icon">&#9711;</div>
+        <div class="usecase-role">Freelancers</div>
+        <div class="usecase-desc">Services, availability, past work -- clients see the real you before the first call.</div>
+        <div class="usecase-example">maria.r0am.ai</div>
+      </div>
+      <div class="usecase">
+        <div class="usecase-icon">&#9834;</div>
+        <div class="usecase-role">Musicians</div>
+        <div class="usecase-desc">Releases, upcoming shows, press photos, influences. A page that sounds like you look.</div>
+        <div class="usecase-example">nova.r0am.ai</div>
+      </div>
+      <div class="usecase">
+        <div class="usecase-icon">&#10023;</div>
+        <div class="usecase-role">Creators</div>
+        <div class="usecase-desc">Content, collabs, brand deals, audience -- all the context sponsors and fans need, auto-refreshed.</div>
+        <div class="usecase-example">riley.r0am.ai</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ============================================= -->
+<!-- PRICING                                       -->
+<!-- ============================================= -->
+<section class="section" id="pricing">
+  <div class="container">
+    <div class="reveal" style="text-align: center;">
+      <div class="section-label" style="justify-content: center;">
+        <span>Simple Pricing</span>
+      </div>
+      <h2 class="section-title" style="margin-left: auto; margin-right: auto;">One price. Full identity.</h2>
+      <p class="section-subtitle" style="margin-left: auto; margin-right: auto; text-align: center;">Start free, upgrade when you're ready. No hidden tiers, no feature walls.</p>
+    </div>
+
+    <div class="pricing-grid reveal reveal-delay-2">
+      <div class="pricing-card">
+        <div class="pricing-tier">Free</div>
+        <div class="pricing-price">
+          <span class="pricing-price-amount">$0</span>
+          <span class="pricing-price-period">/ forever</span>
+        </div>
+        <p class="pricing-desc">Get started with your public page. r0am branding included.</p>
+        <ul class="pricing-features">
+          <li>
+            <span class="check">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            Full pageOS profile
+          </li>
+          <li>
+            <span class="check">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            humanOS auto-sync
+          </li>
+          <li>
+            <span class="check">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            username.r0am.ai subdomain
+          </li>
+          <li>
+            <span class="check">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            AI layout generation
+          </li>
+          <li>
+            <span class="check">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            "Powered by r0am" badge
+          </li>
+        </ul>
+        <button class="pricing-btn pricing-btn--free">Get Started</button>
+      </div>
+
+      <div class="pricing-card pricing-card--pro">
+        <div class="pricing-badge">Popular</div>
+        <div class="pricing-tier">Pro</div>
+        <div class="pricing-price">
+          <span class="pricing-price-amount">$9</span>
+          <span class="pricing-price-period">/ month</span>
+        </div>
+        <p class="pricing-desc">Your page, your brand. No r0am branding. Custom domain support.</p>
+        <ul class="pricing-features">
+          <li>
+            <span class="check">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            Everything in Free
+          </li>
+          <li>
+            <span class="check">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            Remove r0am branding
+          </li>
+          <li>
+            <span class="check">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            Custom domain (yourname.com)
+          </li>
+          <li>
+            <span class="check">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            Advanced AI style controls
+          </li>
+          <li>
+            <span class="check">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            Analytics dashboard
+          </li>
+          <li>
+            <span class="check">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            Priority support
+          </li>
+        </ul>
+        <button class="pricing-btn pricing-btn--pro">Start Pro</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ============================================= -->
+<!-- CTA                                           -->
+<!-- ============================================= -->
+<section class="cta-section" id="claim">
+  <div class="container">
+    <div class="reveal">
+      <div class="cta-symbol">&#9672;</div>
+      <h2 class="cta-title">Claim your page.</h2>
+      <p class="cta-subtitle">Your identity deserves more than a list of links.</p>
+    </div>
+
+    <div class="claim-input-wrapper reveal reveal-delay-1">
+      <div class="claim-input-container">
+        <input
+          type="text"
+          class="claim-input"
+          id="claim-username"
+          placeholder="yourname"
+          maxlength="24"
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <span class="claim-suffix">.r0am.ai</span>
+        <button class="claim-btn" id="claim-btn">Claim</button>
+      </div>
+      <div class="claim-feedback hidden" id="claim-feedback"></div>
+    </div>
+
+    <div class="cta-back reveal reveal-delay-2">
+      pageOS is part of the <a href="https://r0am.ai">r0am.ai</a> identity stack
+    </div>
+  </div>
+</section>
+
+<!-- ============================================= -->
+<!-- FOOTER                                        -->
+<!-- ============================================= -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="footer-symbol">&#9672;</span>
+      <span class="footer-name">pageOS</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://r0am.ai" class="footer-link">r0am.ai</a>
+      <a href="#features" class="footer-link">Features</a>
+      <a href="#pricing" class="footer-link">Pricing</a>
+    </div>
+    <div class="footer-copy">&copy; 2026 r0am.ai</div>
+  </div>
+</footer>
+
+<!-- ============================================= -->
+<!-- JAVASCRIPT                                    -->
+<!-- ============================================= -->
+<script>
+(function() {
+  'use strict';
+
+  // ------------------------------------------
+  // Nav scroll effect
+  // ------------------------------------------
+  const nav = document.getElementById('nav');
+  let lastScroll = 0;
+
+  function handleScroll() {
+    const scrollY = window.scrollY;
+    if (scrollY > 40) {
+      nav.classList.add('scrolled');
+    } else {
+      nav.classList.remove('scrolled');
+    }
+    lastScroll = scrollY;
+  }
+
+  window.addEventListener('scroll', handleScroll, { passive: true });
+
+  // ------------------------------------------
+  // IntersectionObserver reveal
+  // ------------------------------------------
+  const reveals = document.querySelectorAll('.reveal');
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.1,
+      rootMargin: '0px 0px -60px 0px'
+    });
+
+    reveals.forEach(function(el) {
+      observer.observe(el);
+    });
+  } else {
+    // Fallback: show everything
+    reveals.forEach(function(el) {
+      el.classList.add('visible');
+    });
+  }
+
+  // ------------------------------------------
+  // Claim username interaction
+  // ------------------------------------------
+  const claimInput = document.getElementById('claim-username');
+  const claimBtn = document.getElementById('claim-btn');
+  const claimFeedback = document.getElementById('claim-feedback');
+
+  const takenNames = ['admin', 'alex', 'sarah', 'test', 'pageos', 'r0am', 'roam', 'root', 'null'];
+
+  function sanitizeUsername(str) {
+    return str.toLowerCase().replace(/[^a-z0-9\-_]/g, '').substring(0, 24);
+  }
+
+  function handleClaim() {
+    var raw = claimInput.value.trim();
+    var username = sanitizeUsername(raw);
+
+    if (!username) {
+      showFeedback('Enter a username to claim your page.', false);
+      return;
+    }
+
+    if (username.length < 3) {
+      showFeedback('Username must be at least 3 characters.', false);
+      return;
+    }
+
+    if (takenNames.indexOf(username) !== -1) {
+      showFeedback(username + '.r0am.ai is already taken. Try another.', false);
+      return;
+    }
+
+    showFeedback(username + '.r0am.ai is available! Redirecting to sign up...', true);
+
+    // Simulate redirect delay
+    setTimeout(function() {
+      showFeedback(username + '.r0am.ai reserved. We will notify you at launch.', true);
+    }, 2000);
+  }
+
+  function showFeedback(message, success) {
+    claimFeedback.textContent = message;
+    claimFeedback.style.color = success ? 'var(--amber)' : '#EF4444';
+    claimFeedback.classList.remove('hidden');
+  }
+
+  claimBtn.addEventListener('click', handleClaim);
+
+  claimInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      handleClaim();
+    }
+  });
+
+  // Live sanitization
+  claimInput.addEventListener('input', function() {
+    var sanitized = sanitizeUsername(this.value);
+    if (this.value !== sanitized) {
+      this.value = sanitized;
+    }
+    claimFeedback.classList.add('hidden');
+  });
+
+  // ------------------------------------------
+  // Smooth scroll for anchor links
+  // ------------------------------------------
+  document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+    anchor.addEventListener('click', function(e) {
+      var target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+
+  // ------------------------------------------
+  // Profile card hover parallax (desktop only)
+  // ------------------------------------------
+  var profileCard = document.querySelector('.profile-card');
+  var heroMockup = document.querySelector('.hero-mockup');
+
+  if (profileCard && heroMockup && window.matchMedia('(min-width: 901px)').matches) {
+    heroMockup.addEventListener('mousemove', function(e) {
+      var rect = heroMockup.getBoundingClientRect();
+      var x = (e.clientX - rect.left) / rect.width - 0.5;
+      var y = (e.clientY - rect.top) / rect.height - 0.5;
+
+      profileCard.style.transform =
+        'rotateY(' + (x * 8) + 'deg) rotateX(' + (-y * 6) + 'deg)';
+    });
+
+    heroMockup.addEventListener('mouseleave', function() {
+      profileCard.style.transform = 'rotateY(-3deg) rotateX(2deg)';
+    });
+  }
+
+})();
+</script>
+</body>
+</html>
