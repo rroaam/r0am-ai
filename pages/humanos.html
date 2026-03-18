@@ -231,6 +231,20 @@ nav {
   justify-content: center;
   padding: 120px 0 80px;
   overflow: hidden;
+  background-image: url('images/humanos-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Dark overlay for hero background image */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(10,10,11,0.4) 0%, rgba(10,10,11,0.85) 60%, rgba(10,10,11,1) 100%);
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* Grid background */
@@ -243,6 +257,7 @@ nav {
   background-size: 60px 60px;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 80%);
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 80%);
+  z-index: 1;
 }
 
 /* Radial lime glow */
@@ -255,6 +270,7 @@ nav {
   height: 600px;
   background: radial-gradient(ellipse, rgba(169, 237, 61, 0.06) 0%, transparent 70%);
   pointer-events: none;
+  z-index: 1;
 }
 
 .hero-glow-orb {
@@ -267,6 +283,7 @@ nav {
   background: radial-gradient(circle, rgba(169, 237, 61, 0.1) 0%, transparent 60%);
   pointer-events: none;
   animation: pulse-glow 6s ease-in-out infinite;
+  z-index: 1;
 }
 
 @keyframes pulse-glow {

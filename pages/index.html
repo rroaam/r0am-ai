@@ -233,6 +233,20 @@ a {
   position: relative;
   overflow: hidden;
   padding-top: 56px;
+  background-image: url('images/r0am-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Dark overlay for hero background image */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(10,10,11,0.4) 0%, rgba(10,10,11,0.85) 60%, rgba(10,10,11,1) 100%);
+  z-index: 0;
+  pointer-events: none;
 }
 
 .hero__grid-bg {
@@ -245,6 +259,7 @@ a {
   opacity: 0.4;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 100%);
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 100%);
+  z-index: 1;
 }
 
 .hero__glow {
@@ -256,6 +271,7 @@ a {
   height: 800px;
   background: radial-gradient(circle, rgba(169, 237, 61, 0.06) 0%, transparent 60%);
   pointer-events: none;
+  z-index: 1;
 }
 
 .hero__glow-2 {
@@ -266,11 +282,12 @@ a {
   height: 600px;
   background: radial-gradient(circle, rgba(139, 159, 240, 0.04) 0%, transparent 60%);
   pointer-events: none;
+  z-index: 1;
 }
 
 .hero__content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   text-align: center;
   width: 100%;
 }
@@ -908,6 +925,146 @@ a {
     gap: 16px;
   }
 }
+
+/* ========================================
+   PRODUCT NAV (Explore the Stack)
+   ======================================== */
+.product-nav {
+  padding: 120px 0;
+  position: relative;
+  background: var(--bg);
+}
+
+.product-nav__header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+
+.product-nav__title {
+  font-family: var(--serif);
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 300;
+  letter-spacing: -1px;
+  margin-top: 16px;
+}
+
+.product-nav__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.product-nav__card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  position: relative;
+  height: 380px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.product-nav__card:hover {
+  transform: scale(1.02);
+}
+
+.product-nav__card--humanos:hover {
+  box-shadow: 0 0 24px rgba(169, 237, 61, 0.2),
+              0 0 0 1px rgba(169, 237, 61, 0.3);
+}
+
+.product-nav__card--workos:hover {
+  box-shadow: 0 0 24px rgba(52, 205, 63, 0.2),
+              0 0 0 1px rgba(52, 205, 63, 0.3);
+}
+
+.product-nav__card--pageos:hover {
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.2),
+              0 0 0 1px rgba(245, 158, 11, 0.3);
+}
+
+.product-nav__card-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+
+.product-nav__card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    0deg,
+    rgba(10, 10, 11, 0.95) 0%,
+    rgba(10, 10, 11, 0.7) 40%,
+    rgba(10, 10, 11, 0.3) 100%
+  );
+  z-index: 1;
+}
+
+.product-nav__card-content {
+  position: relative;
+  z-index: 2;
+  padding: 36px 32px;
+}
+
+.product-nav__card-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.product-nav__card--humanos .product-nav__card-label { color: var(--lime); }
+.product-nav__card--workos .product-nav__card-label { color: var(--green); }
+.product-nav__card--pageos .product-nav__card-label { color: var(--amber); }
+
+.product-nav__card-title {
+  font-family: var(--serif);
+  font-size: 36px;
+  font-weight: 300;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.product-nav__card-tagline {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.product-nav__card-price {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.product-nav__card--humanos .product-nav__card-price { color: var(--lime); }
+.product-nav__card--workos .product-nav__card-price { color: var(--green); }
+.product-nav__card--pageos .product-nav__card-price { color: var(--amber); }
+
+@media (max-width: 900px) {
+  .product-nav__grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .product-nav__card {
+    height: 320px;
+  }
+}
 </style>
 </head>
 <body>
@@ -955,6 +1112,50 @@ a {
         <div class="hero__stat-value">$0</div>
         <div class="hero__stat-label">Raised</div>
       </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============ PRODUCT NAV ============ -->
+<section class="product-nav" id="explore">
+  <div class="container">
+    <div class="product-nav__header reveal">
+      <span class="label label--lime">EXPLORE THE STACK</span>
+      <h2 class="product-nav__title">Three layers. One identity.</h2>
+    </div>
+    <div class="product-nav__grid">
+      <a href="humanos.html" class="product-nav__card product-nav__card--humanos reveal reveal-delay-1">
+        <div class="product-nav__card-bg" style="background-image: url('images/humanos-bg.jpg');"></div>
+        <div class="product-nav__card-overlay"></div>
+        <div class="product-nav__card-content">
+          <div class="product-nav__card-label">PRIVATE IDENTITY</div>
+          <div class="product-nav__card-title">humanOS</div>
+          <div class="product-nav__card-tagline">Make AI remember you.</div>
+          <div class="product-nav__card-price">$12 / mo</div>
+        </div>
+      </a>
+      <a href="workos.html" class="product-nav__card product-nav__card--workos reveal reveal-delay-2">
+        <div class="product-nav__card-bg" style="background-image: url('images/workos-bg.jpg');"></div>
+        <div class="product-nav__card-overlay"></div>
+        <div class="product-nav__card-content">
+          <div class="product-nav__card-label">BRAND IDENTITY</div>
+          <div class="product-nav__card-title">workOS</div>
+          <div class="product-nav__card-tagline">Upload your brand. Get a creative director.</div>
+          <div class="product-nav__card-price">$49-499 / mo</div>
+        </div>
+      </a>
+      <a href="pageos.html" class="product-nav__card product-nav__card--pageos reveal reveal-delay-3">
+        <div class="product-nav__card-bg" style="background-image: url('images/pageos-bg.jpg');"></div>
+        <div class="product-nav__card-overlay"></div>
+        <div class="product-nav__card-content">
+          <div class="product-nav__card-label">PUBLIC IDENTITY</div>
+          <div class="product-nav__card-title">pageOS</div>
+          <div class="product-nav__card-tagline">Your living public profile.</div>
+          <div class="product-nav__card-price">$9 / mo</div>
+        </div>
+      </a>
     </div>
   </div>
 </section>
